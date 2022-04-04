@@ -1,0 +1,10 @@
+/MedicalOffice.Api/obj
+/MedicalOffice.Api/bin
+
+/MedicalOffice.DAL/obj
+/MedicalOffice.DAL/bin
+
+/MedicalOffice.Services/obj
+/MedicalOffice.Services/bin
+
+/.idea
