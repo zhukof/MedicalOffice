@@ -1,4 +1,6 @@
+using MedicalOffice.Api.Factories;
 using MedicalOffice.DAL;
+using MedicalOffice.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,7 +14,14 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddTransient<IDoctorService, DoctorService>();
+builder.Services.AddTransient<IPatientService, PatientService>();
+builder.Services.AddTransient<ICabinetService, CabinetService>();
+builder.Services.AddTransient<ISpecializationService, SpecializationService>();
+builder.Services.AddTransient<IRegionService, RegionService>();
 
+builder.Services.AddTransient<IDoctorModelFactory, DoctorModelFactory>();
+builder.Services.AddTransient<IPatientModelFactory, PatientModelFactory>();
 
 var app = builder.Build();
 

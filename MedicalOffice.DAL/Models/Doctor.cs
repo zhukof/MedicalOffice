@@ -1,5 +1,8 @@
-﻿namespace MedicalOffice.DAL.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace MedicalOffice.DAL.Models
 {
+    [Table(nameof(Doctor))]
     public class Doctor : BaseEntity
     {
         public string LastName { get; set; }
