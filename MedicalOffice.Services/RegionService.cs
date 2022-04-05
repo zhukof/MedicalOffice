@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MedicalOffice.DAL;
 using MedicalOffice.DAL.Models;
@@ -23,5 +24,10 @@ public class RegionService : IRegionService
     public async Task<Region> GetByIdAsync(int id)
     {
         return await _appDbContext.Regions.FirstOrDefaultAsync(el => el.Id == id);
+    }
+
+    public IQueryable<Region> GetByIds(IList<int> regionIds)
+    {
+        return _appDbContext.Regions.Where(el => regionIds.Contains(el.Id));
     }
 }

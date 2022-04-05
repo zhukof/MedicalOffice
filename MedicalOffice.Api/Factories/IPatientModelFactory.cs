@@ -1,9 +1,10 @@
-﻿using MedicalOffice.Api.DtoModels;
+﻿using MedicalOffice.Api.Models;
+using MedicalOffice.Api.Models.Dtos;
 
 namespace MedicalOffice.Api.Factories;
 
 public interface IPatientModelFactory
 {
-    Task<IList<PatientDto>> GetAllAsync();
+    PagedList<PatientDto> GetAll(PagingInfo pagingInfo);
     Task<PatientDto?> GetByIdAsync(int id);
 }

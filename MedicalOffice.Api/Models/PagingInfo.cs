@@ -2,7 +2,7 @@
 
 namespace MedicalOffice.Api.Models
 {
-    public class ParameterListModel
+    public class PagingInfo
     {
         public IList<OrderingModel> Order { get; set; } = new List<OrderingModel>();
         

@@ -1,5 +1,7 @@
-﻿using MedicalOffice.Api.DtoModels;
-using MedicalOffice.Api.Factories;
+﻿using MedicalOffice.Api.Factories;
+using MedicalOffice.Api.Models;
+using MedicalOffice.Api.Models.Dtos;
+using MedicalOffice.Api.Models.Requests;
 using MedicalOffice.DAL.Models;
 using MedicalOffice.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -11,57 +13,122 @@ public class PatientController : BaseController
     private readonly IPatientModelFactory _patientModelFactory;
     private readonly IPatientService _patientService;
 
-    public PatientController(IPatientModelFactory patientModelFactory, IPatientService patientService)
+    public PatientController(IPatientModelFactory patientModelFactory,
+        IPatientService patientService)
     {
         _patientModelFactory = patientModelFactory;
         _patientService = patientService;
     }
-    
+
     [HttpPost("GetPatients")]
-    public async Task<IList<PatientDto>> GetPatients()
+    public IActionResult GetPatients(PagingInfo pagingInfo)
     {
-        return await _patientModelFactory.GetAllAsync();
+        try
+        {
+            return Ok(_patientModelFactory.GetAll(pagingInfo));
+        }
+        catch (Exception exception)
+        {
+            Console.WriteLine(exception);
+            return BadRequest(exception);
+        }
     }
-    
+
     [HttpGet("GetPatient")]
     public async Task<IActionResult> GetPatient(int id)
     {
-        var patientDto = await _patientModelFactory.GetByIdAsync(id);
-        
-        if (patientDto == null)
+        try
         {
-            return NotFound();
-        }
-        
-        return Ok(patientDto);
-    }
-    
-    [HttpPost("UpdatePatient")]
-    public async Task<IActionResult> UpdatePatient(PatientDto patientDto)
-    {
-        var patient = await _patientService.GetByIdAsync(patientDto.Id);
-        
-        if (patient == null)
-        {
-            return NotFound();
-        }
+            var patientDto = await _patientModelFactory.GetByIdAsync(id);
 
-        patient.FirstName = patient.FirstName;
-        patient.LastName = patient.LastName;
-        patient.SecondName = patient.SecondName;
-        
-        patient.Address = patient.Address;
-        patient.Gender = patient.Gender;
-        patient.DateOfBirth = patient.DateOfBirth;
-        
-        return Ok(patient);
+            if (patientDto == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(patientDto);
+        }
+        catch (Exception exception)
+        {
+            Console.WriteLine(exception);
+            return BadRequest(exception);
+        }
     }
-    
-    [HttpDelete("RemovePatient")]
-    public async Task RemovePatient(int id)
+
+    [HttpPost("CreatePatient")]
+    public async Task<IActionResult> CreatePatient(PatientCreateRequest request)
     {
-        
-        
-        await _patientService.UpdateAsync(new Patient());
+        try
+        {
+            var patient = new Patient();
+
+            await CreateOrUpdatePatient(request, patient);
+
+            return Ok(await _patientModelFactory.GetByIdAsync(patient.Id));
+        }
+        catch (Exception exception)
+        {
+            Console.WriteLine(exception);
+            return BadRequest(exception);
+        }
+    }
+
+    [HttpPost("UpdatePatient")]
+    public async Task<IActionResult> UpdatePatient(PatientCreateRequest request)
+    {
+        try
+        {
+            var patient = await _patientService.GetByIdAsync(request.Id);
+
+            if (patient == null)
+            {
+                return NotFound();
+            }
+
+            await CreateOrUpdatePatient(request, patient);
+
+            return Ok(await _patientModelFactory.GetByIdAsync(patient.Id));
+        }
+        catch (Exception exception)
+        {
+            Console.WriteLine(exception);
+            return BadRequest(exception);
+        }
+    }
+
+    [HttpDelete("RemovePatient")]
+    public async Task<IActionResult> RemovePatient(int id)
+    {
+        try
+        {
+            var patient = await _patientService.GetByIdAsync(id);
+            if (patient == null)
+            {
+                return NotFound();
+            }
+
+            await _patientService.RemoveAsync(patient);
+
+            return Ok();
+        }
+        catch (Exception exception)
+        {
+            Console.WriteLine(exception);
+            return BadRequest(exception);
+        }
+    }
+
+    private async Task CreateOrUpdatePatient(PatientCreateRequest request, Patient patient)
+    {
+        patient.FirstName = request.FirstName;
+        patient.LastName = request.LastName;
+        patient.SecondName = request.SecondName;
+
+        patient.Address = request.Address;
+        patient.Gender = request.Gender;
+        patient.DateOfBirth = request.DateOfBirth;
+
+        await _patientService.CreateOrUpdateAsync(patient);
+        await _patientService.UpdatePatientRegionAsync(patient, request.RegionIds);
     }
 }

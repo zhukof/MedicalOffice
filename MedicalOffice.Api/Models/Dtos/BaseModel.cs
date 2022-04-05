@@ -1,4 +1,4 @@
-﻿namespace MedicalOffice.Api.DtoModels;
+﻿namespace MedicalOffice.Api.Models.Dtos;
 
 public abstract class BaseModel
 {

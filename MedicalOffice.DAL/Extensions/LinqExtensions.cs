@@ -9,7 +9,8 @@ namespace MedicalOffice.DAL.Extensions
 {
     public static class LinqExtension
     {
-        private static IQueryable<T> OrderByType<T, TExpression>(IQueryable<T> query, PropertyInfo propertyInfo, OrderingModel order)
+        private static IQueryable<T> OrderByType<T, TExpression>(IQueryable<T> query, PropertyInfo propertyInfo,
+            OrderingModel order)
         {
             var parameterExpression = Expression.Parameter(typeof(T));
             var memberExpression = Expression.Property(parameterExpression, propertyInfo);
@@ -24,26 +25,32 @@ namespace MedicalOffice.DAL.Extensions
             {
                 return query;
             }
-            
+
+            var propertyInfos = typeof(T)
+                .GetProperties()
+                .ToDictionary(el => el.Name.ToLower(), val => val.Name);
+
             foreach (var order in orders)
             {
-                var propertyInfo = typeof(T).GetProperty(order.Column);
-
-                if (propertyInfo != null)
+                if (propertyInfos.ContainsKey(order.Column.ToLower()))
                 {
-                    query = Type.GetTypeCode(propertyInfo.PropertyType) switch
+                    var propertyInfo = typeof(T).GetProperty(propertyInfos[order.Column.ToLower()]);
+                    if (propertyInfo != null)
                     {
-                        TypeCode.String => OrderByType<T, string>(query, propertyInfo, order),
-                        TypeCode.Boolean => OrderByType<T, bool>(query, propertyInfo, order),
-                        TypeCode.DateTime => OrderByType<T, DateTime>(query, propertyInfo, order),
-                        TypeCode.Decimal => OrderByType<T, decimal>(query, propertyInfo, order),
-                        TypeCode.Double => OrderByType<T, double>(query, propertyInfo, order),
-                        TypeCode.Byte => OrderByType<T, byte>(query, propertyInfo, order),
-                        TypeCode.Int16 => OrderByType<T, short>(query, propertyInfo, order),
-                        TypeCode.Int32 => OrderByType<T, int>(query, propertyInfo, order),
-                        TypeCode.Int64 => OrderByType<T, long>(query, propertyInfo, order),
-                        _ => query
-                    };
+                        query = Type.GetTypeCode(propertyInfo.PropertyType) switch
+                        {
+                            TypeCode.String => OrderByType<T, string>(query, propertyInfo, order),
+                            TypeCode.Boolean => OrderByType<T, bool>(query, propertyInfo, order),
+                            TypeCode.DateTime => OrderByType<T, DateTime>(query, propertyInfo, order),
+                            TypeCode.Decimal => OrderByType<T, decimal>(query, propertyInfo, order),
+                            TypeCode.Double => OrderByType<T, double>(query, propertyInfo, order),
+                            TypeCode.Byte => OrderByType<T, byte>(query, propertyInfo, order),
+                            TypeCode.Int16 => OrderByType<T, short>(query, propertyInfo, order),
+                            TypeCode.Int32 => OrderByType<T, int>(query, propertyInfo, order),
+                            TypeCode.Int64 => OrderByType<T, long>(query, propertyInfo, order),
+                            _ => query
+                        };
+                    }
                 }
             }
 

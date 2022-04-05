@@ -1,4 +1,6 @@
-﻿using MedicalOffice.Api.DtoModels;
+﻿using MedicalOffice.Api.Models;
+using MedicalOffice.Api.Models.Dtos;
+using MedicalOffice.DAL.Extensions;
 using MedicalOffice.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,17 +9,34 @@ namespace MedicalOffice.Api.Factories;
 public class PatientModelFactory : IPatientModelFactory
 {
     private readonly IPatientService _patientService;
-    private readonly IRegionService _regionService;
 
-    public PatientModelFactory(IPatientService patientService, IRegionService regionService)
+    public PatientModelFactory(IPatientService patientService)
     {
         _patientService = patientService;
-        _regionService = regionService;
     }
     
-    public async Task<IList<PatientDto>> GetAllAsync()
+    public PagedList<PatientDto> GetAll(PagingInfo pagingInfo)
     {
-        var patientDto = (IQueryable<PatientDto>) _patientService.Table()
+        var patientDtoQuery = GetPatientDto();
+        
+        patientDtoQuery = patientDtoQuery.OrderByOrderingModel(pagingInfo.Order);
+
+        var result = new PagedList<PatientDto>(patientDtoQuery, pagingInfo.Page, pagingInfo.PageSize);
+
+        return result;
+    }
+
+    public async Task<PatientDto?> GetByIdAsync(int id)
+    {
+        var patientDto = await GetPatientDto()
+            .FirstOrDefaultAsync(el => el.Id == id);
+
+        return patientDto;
+    }
+    
+    private IQueryable<PatientDto> GetPatientDto()
+    {
+        return _patientService.Table()
             .Include(el=>el.Regions)
             .ThenInclude(el=>el.Region)
             .Select(el => new PatientDto
@@ -29,31 +48,11 @@ public class PatientModelFactory : IPatientModelFactory
                 Address = el.Address,
                 Gender = el.Gender,
                 DateOfBirth = el.DateOfBirth,
-                Regions = el.Regions.Select(reg=>reg.Region).ToList()
-            });
-
-        return await patientDto.ToListAsync();
-    }
-
-
-    public async Task<PatientDto?> GetByIdAsync(int id)
-    {
-        var patientDto = await ((IQueryable<PatientDto>) _patientService.Table()
-                .Include(el=>el.Regions)
-                .ThenInclude(el=>el.Region)
-                .Select(el => new PatientDto
+                Regions = el.Regions.Select(reg=>new RegionDto
                 {
-                    Id = el.Id,
-                    FirstName = el.FirstName,
-                    LastName = el.LastName,
-                    SecondName = el.SecondName,
-                    Address = el.Address,
-                    Gender = el.Gender,
-                    DateOfBirth = el.DateOfBirth,
-                    Regions = el.Regions.Select(reg=>reg.Region).ToList()
-                }))
-            .FirstOrDefaultAsync(el => el.Id == id);
-
-        return patientDto;
+                    Id = reg.RegionId,
+                    Number = reg.Region.Number
+                }).ToList()
+            });
     }
 }

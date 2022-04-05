@@ -8,7 +8,7 @@ namespace MedicalOffice.Services
     {
         IQueryable<Doctor> Table();
         Task<Doctor> GetByIdAsync(int id);
-        Task<Doctor> UpdateAsync(Doctor doctor); 
+        Task<Doctor> CreateOrUpdateAsync(Doctor doctor, int cabinetId, int specializationId, int? regionId); 
         Task RemoveAsync(Doctor doctor);
     }
 }

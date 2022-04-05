@@ -2,9 +2,9 @@
 
 namespace MedicalOffice.Api.Models
 {
-    public class PagedList<T> : List<T>
+    public class PagedList<T>
     {
-        public async Task<PagedList<T>> FillDataAsync(IQueryable<T> source, int pageIndex, int pageSize)
+        public PagedList(IQueryable<T> source, int pageIndex, int pageSize)
         {
             var total = source.Count();
             TotalCount = total;
@@ -20,19 +20,18 @@ namespace MedicalOffice.Api.Models
 
             PageSize = pageSize;
             PageIndex = pageIndex;
-            
-            AddRange(await source.Skip(pageIndex * pageSize).Take(pageSize).ToListAsync());
 
-            return this;
+            Data = source.Skip(pageIndex * pageSize).Take(pageSize).ToList();
         }
+        
+        public IList<T> Data { get; }
 
-        public int PageIndex { get; set; }
+        public int PageIndex { get; }
 
-        public int PageSize { get; set; }
+        public int PageSize { get; }
 
-        public int TotalCount { get;  set;}
-
-        public int TotalPages { get; set; }
+        public int TotalCount { get; }
+        public int TotalPages { get; }
         
         public bool HasPreviousPage => PageIndex > 0;
 

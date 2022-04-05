@@ -1,6 +1,8 @@
-﻿using MedicalOffice.Api.DtoModels;
-using MedicalOffice.Api.Factories;
+﻿using MedicalOffice.Api.Factories;
 using MedicalOffice.Api.Models;
+using MedicalOffice.Api.Models.Dtos;
+using MedicalOffice.Api.Models.Requests;
+using MedicalOffice.DAL.Models;
 using MedicalOffice.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,94 +12,117 @@ public class DoctorController : BaseController
 {
     private readonly IDoctorModelFactory _doctorModelFactory;
     private readonly IDoctorService _doctorService;
-    private readonly ICabinetService _cabinetService;
-    private readonly ISpecializationService _specializationService;
-    private readonly IRegionService _regionService;
 
     public DoctorController(
         IDoctorModelFactory doctorModelFactory,
-        IDoctorService doctorService,
-        ICabinetService cabinetService,
-        ISpecializationService specializationService,
-        IRegionService regionService)
+        IDoctorService doctorService)
     {
         _doctorModelFactory = doctorModelFactory;
         _doctorService = doctorService;
-        _cabinetService = cabinetService;
-        _specializationService = specializationService;
-        _regionService = regionService;
     }
     
     [HttpPost("GetDoctors")]
-    public async Task<IList<DoctorDto>> GetDoctors(ParameterListModel parameterListModel)
+    public IActionResult GetDoctors(PagingInfo pagingInfo)
     {
-        return await _doctorModelFactory.GetAllAsync(parameterListModel);
+        try
+        {
+            return Ok(_doctorModelFactory.GetAll(pagingInfo));
+        }
+        catch (Exception exception)
+        {
+            Console.WriteLine(exception);
+            return BadRequest(exception);
+        }
     }
     
     [HttpGet("GetDoctor")]
-    public async Task<IActionResult> Get(int id)
+    public async Task<IActionResult> GetDoctor(int id)
     {
-        var doctor = await _doctorModelFactory.GetByIdAsync(id);
-        if (doctor == null)
+        try
         {
-            return NotFound();
-        }
+            var doctor = await _doctorModelFactory.GetByIdAsync(id);
+            if (doctor == null)
+            {
+                return NotFound();
+            }
         
-        return Ok(doctor);
+            return Ok(doctor);
+        }
+        catch (Exception exception)
+        {
+            Console.WriteLine(exception);
+            return BadRequest(exception);
+        }
+    }
+    
+    [HttpPost("CreateDoctor")]
+    public async Task<IActionResult> CreateDoctor(DoctorCreateRequest request)
+    {
+        try
+        {
+            var doctor = new Doctor();
+        
+            await CreateOrUpdateDoctor(request, doctor);
+        
+            return Ok(await _doctorModelFactory.GetByIdAsync(doctor.Id));
+        }
+        catch (Exception exception)
+        {
+            Console.WriteLine(exception);
+            return BadRequest(exception);
+        }
     }
     
     [HttpPost("UpdateDoctor")]
-    public async Task<IActionResult> UpdateDoctor(DoctorDto doctorDto)
+    public async Task<IActionResult> UpdateDoctor(DoctorCreateRequest request)
     {
-        var doctor = await _doctorService.GetByIdAsync(doctorDto.Id);
-        if (doctor == null)
+        try
         {
-            return NotFound();
-        }
+            var doctor = await _doctorService.GetByIdAsync(request.Id);
+            if (doctor == null)
+            {
+                return NotFound();
+            }
 
-        doctor.FirstName = doctorDto.FirstName;
-        doctor.LastName = doctorDto.LastName;
-        doctor.SecondName = doctorDto.SecondName;
+            await CreateOrUpdateDoctor(request, doctor);
 
-        if (doctor.CabinetId != doctorDto.CabinetId)
-        {
-            var cabinet = await _cabinetService.GetByIdAsync(doctorDto.CabinetId);
-            doctor.CabinetId = cabinet.Id;
+            return Ok(await _doctorModelFactory.GetByIdAsync(doctor.Id));
         }
-        
-        if (doctor.SpecializationId != doctorDto.SpecializationId)
+        catch (Exception exception)
         {
-            var specialization = await _specializationService.GetByIdAsync(doctorDto.SpecializationId);
-            doctor.SpecializationId = specialization.Id;
+            Console.WriteLine(exception);
+            return BadRequest(exception);
         }
-
-        if (doctorDto.RegionId.HasValue)
-        {
-            var region = await _regionService.GetByIdAsync(doctorDto.RegionId.Value);
-            doctor.RegionId = region.Id;
-        }
-        else
-        {
-            doctor.RegionId = null;
-        }
-        
-
-        await _doctorService.UpdateAsync(doctor);
-        
-        return Ok(await _doctorModelFactory.GetByIdAsync(doctor.Id));
     }
-    
+
     [HttpDelete("RemoveDoctor")]
     public async Task<IActionResult> RemoveDoctor(int id)
     {
-        var doctor = await _doctorService.GetByIdAsync(id);
-        if (doctor == null)
+        try
         {
-            return NotFound();
-        }
+            var doctor = await _doctorService.GetByIdAsync(id);
+            if (doctor == null)
+            {
+                return NotFound();
+            }
         
-        await _doctorService.UpdateAsync(doctor);
+            await _doctorService.RemoveAsync(doctor);
 
-        return Ok();
+            return Ok();
+        }
+        catch (Exception exception)
+        {
+            Console.WriteLine(exception);
+            return BadRequest(exception);
+        }
+    }
+    
+    private async Task CreateOrUpdateDoctor(DoctorCreateRequest request, Doctor doctor)
+    {
+        doctor.FirstName = request.FirstName;
+        doctor.LastName = request.LastName;
+        doctor.SecondName = request.SecondName;
+
+        await _doctorService.CreateOrUpdateAsync(doctor, request.CabinetId, request.SpecializationId, request.RegionId);
     }
 }

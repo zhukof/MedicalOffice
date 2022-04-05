@@ -1,5 +1,5 @@
-﻿using MedicalOffice.Api.DtoModels;
-using MedicalOffice.Api.Models;
+﻿using MedicalOffice.Api.Models;
+using MedicalOffice.Api.Models.Dtos;
 using MedicalOffice.DAL.Extensions;
 using MedicalOffice.Services;
 using Microsoft.EntityFrameworkCore;
@@ -15,13 +15,13 @@ public class DoctorModelFactory : IDoctorModelFactory
         _doctorService = doctorService;
     }
 
-    public async Task<IList<DoctorDto>> GetAllAsync(ParameterListModel parameterListModel)
+    public PagedList<DoctorDto> GetAll(PagingInfo pagingInfo)
     {
         var doctorDtoQuery = GetDoctorDtoQuery();
 
-        doctorDtoQuery = doctorDtoQuery.OrderByOrderingModel(parameterListModel.Order);
+        doctorDtoQuery = doctorDtoQuery.OrderByOrderingModel(pagingInfo.Order);
 
-        var result = await new PagedList<DoctorDto>().FillDataAsync(doctorDtoQuery, parameterListModel.Page, parameterListModel.PageSize);
+        var result = new PagedList<DoctorDto>(doctorDtoQuery, pagingInfo.Page, pagingInfo.PageSize);
         
         return result;
     }

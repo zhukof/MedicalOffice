@@ -1,7 +1,6 @@
-﻿using MedicalOffice.DAL.Models;
-using MedicalOffice.DAL.Models.Enums;
+﻿using MedicalOffice.DAL.Models.Enums;
 
-namespace MedicalOffice.Api.DtoModels;
+namespace MedicalOffice.Api.Models.Dtos;
 
 public class PatientDto : BaseModel
 {
@@ -12,5 +11,5 @@ public class PatientDto : BaseModel
     public DateTime DateOfBirth { get; set; }
     public Gender Gender { get; set; }
         
-    public IList<Region> Regions { get; set; } 
+    public IList<RegionDto> Regions { get; set; } 
 }
